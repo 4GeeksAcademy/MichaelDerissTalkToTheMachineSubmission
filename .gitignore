@@ -1,10 +1,14 @@
-
 .env*
-!.env.actual
+!.env.example
+
+# next.js and dependencies
+.next/
+node_modules/
 
 # vercel
 .vercel
-@@ -44,3 +45,4 @@ next-env.d.ts
+
+# local data
 *.db
 *.db-shm
 *.db-wal

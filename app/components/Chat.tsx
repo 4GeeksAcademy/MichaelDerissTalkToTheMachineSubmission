@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama3-70b-8192"; // Llama 3 model by Meta
+const APP_CHAT_API_URL = "/api/chat";
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -48,21 +47,19 @@ export default function Chat() {
     setLoading(true);
     const start = Date.now();
     try {
-      const res = await fetch(GROQ_API_URL, {
+      const res = await fetch(APP_CHAT_API_URL, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: MODEL,
           messages: newMessages,
         }),
       });
       const elapsed = Date.now() - start;
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || "API error");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "API error");
       }
       const data = await res.json();
       const aiMessage = data.choices[0].message;
@@ -91,9 +88,9 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row w-full gap-8">
-      {/* Chat panel */}
-      <div className="flex-1 flex flex-col h-[70vh] border rounded-lg p-4 bg-white dark:bg-zinc-900">
+    <div className="flex flex-col md:flex-row-reverse w-full gap-8">
+      {/* Chat log on the right */}
+      <div className="w-full md:w-2/3 flex flex-col h-[70vh] border rounded-lg p-4 bg-white dark:bg-zinc-900 mr-0 md:mr-4">
         <div className="flex-1 overflow-y-auto mb-4">
           {messages.length === 0 && (
             <div className="text-zinc-400 text-center mt-8">No messages yet. Start the conversation!</div>
@@ -103,8 +100,12 @@ export default function Chat() {
               key={i}
               className={`my-2 p-2 rounded-lg max-w-[80%] ${msg.role === "user" ? "bg-blue-100 self-end" : "bg-zinc-200 self-start dark:bg-zinc-800"}`}
             >
-              <span className="block text-xs text-zinc-500 mb-1">{msg.role === "user" ? "You" : "AI"}</span>
-              <span>{msg.content}</span>
+              <span
+                className="block text-sm mb-1"
+                style={{ color: msg.role === "user" ? "#dc2626" : "#2563eb" }}
+              >
+                {msg.role === "user" ? `You: ${msg.content}` : `AI: ${msg.content}`}
+              </span>
             </div>
           ))}
           <div ref={messagesEndRef} />
@@ -138,7 +139,7 @@ export default function Chat() {
         {error && <div className="text-red-500 mt-2">{error}</div>}
       </div>
       {/* Metrics panel */}
-      <div className="w-full md:w-64 border rounded-lg p-4 bg-zinc-50 dark:bg-zinc-950">
+      <div className="w-full md:w-1/3 border rounded-lg p-4 bg-zinc-50 dark:bg-zinc-950">
         <h2 className="font-semibold mb-2">Session Stats</h2>
         <div className="text-sm mb-1">Prompt tokens: <span className="font-mono">{usage.prompt_tokens}</span></div>
         <div className="text-sm mb-1">Completion tokens: <span className="font-mono">{usage.completion_tokens}</span></div>
